@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+ASAR=$(make -s get-asar-url)
+
+cat <<EOF
+FROM base AS asar
+
+RUN git clone '$ASAR' asar && \
+  cd asar && \
+  cmake src && \
+  make
+EOF

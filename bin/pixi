@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+DOCKER=$(make -s get-docker)
+
+DOCKERFILE="$(docker/base && docker/asar && docker/pixi && cat <<EOF
+FROM docker.io/debian:stable-slim
+COPY --from=asar /asar/asar/lib/libasar.so /usr/lib/libasar
+COPY --from=pixi /pixi/build/src/pixi /usr/bin/
+RUN mkdir -p /usr/share/pixi
+COPY --from=pixi /pixi/asm /usr/share/pixi/asm
+COPY --from=pixi /pixi/routines /usr/share/pixi/routines
+COPY --from=pixi /pixi/sprites /usr/share/pixi/sprites
+WORKDIR /workdir
+EOF
+)"
+IMAGE="$(basename "$0"):$(echo "$DOCKERFILE" | sha256sum | cut -d' ' -f1)"
+
+if [ -z "$($DOCKER images -q "$IMAGE")" ]; then
+  echo "$DOCKERFILE" | $DOCKER build -t "$IMAGE" -f - .
+fi
+
+NAME=$(make -s get-name)
+$DOCKER run --rm -i \
+  -v "$PWD":/workdir/ \
+  "$IMAGE" \
+  sh -c "
+    set -eu
+
+    cd /tmp
+    cp -r /usr/share/pixi/* .
+    cp -r /workdir/* .
+    pixi \"\$@\"
+    cp -f '${NAME}.extmod' '${NAME}.mw2' '${NAME}.mwt' '${NAME}.s16' '${NAME}.ssc' '${NAME}.smc' /workdir
+  " pixi "$@"

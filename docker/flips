@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+FLIPS=$(make -s get-flips-url)
+
+cat <<EOF
+FROM base AS flips
+
+RUN mkdir flips && \
+  cd flips && \
+  curl -o flips.zip '$FLIPS' && \
+  unzip flips.zip && \
+  unzip src.zip && \
+  make TARGET=cli DIVSUF=no CXX=c++
+EOF

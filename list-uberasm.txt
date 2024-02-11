@@ -1,0 +1,4 @@
+macrolib: other/macro_library.asm
+statusbar: other/status_code.asm
+global: other/global_code.asm
+sprite: $7FAC80

@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+ADDMUSICK=$(make -s get-addmusick-url)
+
+cat <<EOF
+FROM base AS addmusick
+
+RUN mkdir addmusick && \
+  cd addmusick && \
+  curl -o addmusick.zip '$ADDMUSICK' && \
+  unzip addmusick.zip && \
+  mv */* . && \
+  unzip src.zip && \
+  make CXX=c++
+EOF

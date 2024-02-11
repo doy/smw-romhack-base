@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+
+cat <<EOF
+FROM docker.io/debian:stable-slim AS base
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  git \
+  curl \
+  cmake \
+  make \
+  ca-certificates \
+  clang \
+  unzip \
+  python-is-python3
+EOF

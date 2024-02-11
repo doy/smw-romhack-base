@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+GPS=$(make -s get-gps-url)
+
+cat <<EOF
+FROM base AS gps
+
+RUN mkdir gps && \
+  cd gps && \
+  curl -o gps.zip '$GPS' && \
+  unzip gps.zip && \
+  unzip src.zip && \
+  cd gps_src && \
+  c++ -Wno-reserved-user-defined-literal main.cpp asar/asardll.c -o gps
+EOF

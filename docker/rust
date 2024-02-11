@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+
+cat <<EOF
+FROM base AS rust
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+EOF

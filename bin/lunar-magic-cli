@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+DOCKER=$(make -s get-docker)
+
+DOCKERFILE="$(docker/base && docker/wine && docker/lunar-magic && cat <<EOF
+FROM wine
+COPY --from=lunar-magic /lunar-magic /usr/share/lunar-magic
+WORKDIR /workdir
+EOF
+)"
+IMAGE="$(basename "$0"):$(echo "$DOCKERFILE" | sha256sum | cut -d' ' -f1)"
+
+if [ -z "$($DOCKER images -q "$IMAGE")" ]; then
+  echo "$DOCKERFILE" | $DOCKER build -t "$IMAGE" -f - .
+fi
+
+$DOCKER run --rm -it \
+  -v "$PWD":/workdir/ \
+  "$IMAGE" \
+  wine "/usr/share/lunar-magic/Lunar Magic.exe" "$@"

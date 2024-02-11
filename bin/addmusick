@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+DOCKER="$(make -s get-docker)"
+
+DOCKERFILE="$(docker/base && docker/asar && docker/addmusick && cat <<EOF
+FROM docker.io/debian:stable-slim
+COPY --from=asar /asar/asar/lib/libasar.so /usr/lib/libasar
+COPY --from=addmusick /addmusick/AddmusicK /usr/bin/
+RUN mkdir -p /usr/share/addmusick
+COPY --from=addmusick /addmusick/asm /usr/share/addmusick/asm
+COPY --from=addmusick /addmusick/music /usr/share/addmusick/music
+COPY --from=addmusick /addmusick/samples /usr/share/addmusick/samples
+COPY --from=addmusick /addmusick/1DF9 /usr/share/addmusick/1DF9
+COPY --from=addmusick /addmusick/1DFC /usr/share/addmusick/1DFC
+COPY --from=addmusick [ \
+  "/addmusick/Addmusic_list.txt", \
+  "/addmusick/Addmusic_sample groups.txt", \
+  "/addmusick/Addmusic_sound effects.txt", \
+  "/usr/share/addmusick/" \
+]
+WORKDIR /workdir
+EOF
+)"
+IMAGE="$(basename "$0"):$(echo "$DOCKERFILE" | sha256sum | cut -d' ' -f1)"
+
+if [ -z "$($DOCKER images -q "$IMAGE")" ]; then
+  echo "$DOCKERFILE" | $DOCKER build -t "$IMAGE" -f - .
+fi
+
+NAME="$(make -s get-name)"
+$DOCKER run --rm -i \
+  -v "$PWD":/workdir/ \
+  "$IMAGE" \
+  sh -c "
+    set -eu
+
+    cd /tmp
+    cp -r /usr/share/addmusick/* .
+    cp -r /workdir/* .
+    cat /usr/share/addmusick/Addmusic_list.txt > Addmusic_list.txt
+    echo >> Addmusic_list.txt
+    cat /workdir/list-addmusick.txt >> Addmusic_list.txt
+    AddmusicK \"\$@\"
+    cp -f '${NAME}.msc' '${NAME}.smc' /workdir
+    rm -f '/workdir/${NAME}.smc~'
+  " addmusick "$@"

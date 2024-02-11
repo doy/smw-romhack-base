@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+TILE_EDITOR=$(make -s get-tile-editor-url)
+
+cat <<EOF
+FROM rust AS tile-editor
+
+RUN git clone '$TILE_EDITOR' tile-editor && \
+  cd tile-editor && \
+  ~/.cargo/bin/cargo build --release
+EOF

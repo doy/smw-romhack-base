@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+UBERASM=$(make -s get-uberasm-url)
+
+cat <<EOF
+FROM base AS uberasm
+
+RUN mkdir uberasm && \
+  cd uberasm && \
+  curl -o uberasm.zip '$UBERASM' && \
+  unzip uberasm.zip
+EOF

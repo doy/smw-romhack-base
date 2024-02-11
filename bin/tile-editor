@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+DOCKER=$(make -s get-docker)
+
+DOCKERFILE="$(docker/base && docker/rust && docker/tile-editor && cat <<EOF
+FROM docker.io/debian:stable-slim
+COPY --from=tile-editor /tile-editor/target/release/tile-editor /usr/bin/tile-editor
+WORKDIR /workdir
+EOF
+)"
+IMAGE="$(basename "$0"):$(echo "$DOCKERFILE" | sha256sum | cut -d' ' -f1)"
+
+if [ -z "$($DOCKER images -q "$IMAGE")" ]; then
+  echo "$DOCKERFILE" | $DOCKER build -t "$IMAGE" -f - .
+fi
+
+$DOCKER run --rm -i \
+  -v "$PWD":/workdir/ \
+  "$IMAGE" \
+  tile-editor "$@"

@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+
+cat <<EOF
+FROM docker.io/debian:stable-slim AS wine
+RUN dpkg --add-architecture i386 && apt-get update && apt-get install -y --no-install-recommends curl wine unzip ca-certificates wine32:i386 fonts-liberation
+RUN curl -O https://dl.winehq.org/wine/wine-gecko/2.47.4/wine-gecko-2.47.4-x86.msi && wine msiexec /i wine-gecko-2.47.4-x86.msi
+RUN curl -O https://dl.winehq.org/wine/wine-mono/9.0.0/wine-mono-9.0.0-x86.msi && wine msiexec /i wine-mono-9.0.0-x86.msi
+EOF

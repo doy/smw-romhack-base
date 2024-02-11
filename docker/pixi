@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+PIXI=$(make -s get-pixi-url)
+
+cat <<EOF
+FROM base AS pixi
+
+RUN git clone '$PIXI' pixi && \
+  cd pixi && \
+  mkdir build && \
+  cd build && \
+  cmake -S .. -B . && \
+  cmake --build . --config Release
+EOF

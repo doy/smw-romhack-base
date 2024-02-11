@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"/..
+LUNAR_MAGIC=$(make -s get-lunar-magic-url)
+
+cat <<EOF
+FROM base AS lunar-magic
+
+RUN mkdir lunar-magic && \
+  cd lunar-magic && \
+  curl -o lunar_magic.zip '$LUNAR_MAGIC' && \
+  unzip lunar_magic.zip
+EOF
